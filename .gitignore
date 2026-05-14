@@ -1,0 +1,17 @@
+# Ignore Visual Studio build folders
+x64/
+Debug/
+Release/
+*.obj
+*.exe
+*.pdb
+*.idb
+*.tlog
+*.log
+*.lastbuildstate
+
+*.user
+*.suo
+
+*.ipch
+*.cache
