@@ -1,211 +1,212 @@
 #include"PIECE.h"
 #include "Board.h"
-//----------------------PIECE-----------------------------
-PIECE::PIECE(char s, COLOR c)
+//PIECE-----------------------------
+PIECE::PIECE(char pieceChar, COLOR pieceShade)
 {
-	symbol = s;
-	color = c;
+	pieceSymbol = pieceChar;
+	pieceColor = pieceShade;
 }
 char PIECE::get_Symbol()
 {
-	return symbol;
+	return pieceSymbol;
 }
 COLOR PIECE::get_color()
 {
-	return color;
+	return pieceColor;
 }
 
 PIECE::~PIECE()
 {
 
 }
-//------------PAWN-----------------
-PAWN::PAWN(char s, COLOR c) :PIECE(s, c)
+//PAWN-----------------
+PAWN::PAWN(char pawnChar, COLOR pawnColor) :PIECE(pawnChar, pawnColor)
 {
 
 }
-bool PAWN::isValidMove(int sr, int sc, int dr, int dc, Board* b)
+bool PAWN::isValidMove(int startRow, int startCol, int destRow, int destCol, Board* chessBoard)
 {
-	int direction = ((color == WHITE) ? -1 : 1);
-	if (sr == dr && sc == dc)//If same source and destination than invalid
+	int moveDirection = ((pieceColor == WHITE) ? -1 : 1);
+	if (startRow == destRow && startCol == destCol)//If same source and destination than invalid
 	{
 		return false;
 	}
-	if (sc == dc && dr == sr + direction) //Logic for forward move
+	if (startCol == destCol && destRow == startRow + moveDirection) //Logic for forward move
 	{
-		if (b->get_piece(dr, dc) == nullptr)
+		if (chessBoard->get_piece(destRow, destCol) == nullptr)
 		{
 			return true;
 		}
 	}
-	if (sc == dc && dr == sr + 2 * direction) //Logic for first time 2 step move
+	if (startCol == destCol && destRow == startRow + 2 * moveDirection) //Logic for first time 2 step move
 	{
-		if ((color == WHITE && sr == 6) || (color == BLACK && sr == 1))//checking if pawn is at initial position
+		if ((pieceColor == WHITE && startRow == 6) || (pieceColor == BLACK && startRow == 1))//checking if pawn is at initial position
 		{
-			if (b->get_piece(sr + direction, sc) == nullptr && b->get_piece(dr, dc) == nullptr)//Checking for empty space
+			if (chessBoard->get_piece(startRow + moveDirection, startCol) == nullptr && chessBoard->get_piece(destRow, destCol) == nullptr)//Checking for empty space
 			{
 				return true;
 			}
 		}
 	}
-	int diff = sc - dc;
-	if ((diff == 1 || diff == -1) && dr == sr + direction)//For diagonal attack
+	int columnDifference = startCol - destCol;
+	if ((columnDifference == 1 || columnDifference == -1) && destRow == startRow + moveDirection)//For diagonal attack
 	{
-		if (b->get_piece(dr, dc) != nullptr && b->get_piece(dr, dc)->get_color() != color)
+		if (chessBoard->get_piece(destRow, destCol) != nullptr && chessBoard->get_piece(destRow, destCol)->get_color() != pieceColor)
 		{
 			return true;
 		}
 	}
 	return false;
 }
-//---------------BISHOP-------------------
-BISHOP::BISHOP(char s, COLOR c) :PIECE(s, c)
+//BISHOP-------------------
+BISHOP::BISHOP(char bishopChar, COLOR bishopColor) :PIECE(bishopChar, bishopColor)
 {
 
 }
-bool BISHOP::isValidMove(int sr, int sc, int dr, int dc, Board* b)
+bool BISHOP::isValidMove(int startRow, int startCol, int destRow, int destCol, Board* chessBoard)
 {
-	int row_diff = dr - sr;
-	int col_diff = dc - sc;
-	if (row_diff < 0)
+	int rowDifference = destRow - startRow;
+	int colDifference = destCol - startCol;
+	if (rowDifference < 0)
 	{
-		row_diff *= -1;
+		rowDifference *= -1;
 	}
-	if (col_diff < 0)
+	if (colDifference < 0)
 	{
-		col_diff *= -1;
+		colDifference *= -1;
 	}
-	if (row_diff != col_diff || (sr == dr && sc == dc))//Invalid Move
-	{
-		return false;
-	}
-	if (!b->is_Path_Clear(sr, sc, dr, dc)) //Checking Path
+	if (rowDifference != colDifference || (startRow == destRow && startCol == destCol))//Invalid Move
 	{
 		return false;
 	}
-	if (b->get_piece(dr, dc) != nullptr && b->get_piece(dr, dc)->get_color() == color)//Checking same color piece
+	if (!chessBoard->is_Path_Clear(startRow, startCol, destRow, destCol)) //Checking Path
+	{
+		return false;
+	}
+	if (chessBoard->get_piece(destRow, destCol) != nullptr && chessBoard->get_piece(destRow, destCol)->get_color() == pieceColor)//Checking same color piece
 	{
 		return false;
 	}
 	return true;
 }
-//----------------KNIGHT--------------------
-KNIGHT::KNIGHT(char s, COLOR c) :PIECE(s, c)
+//KNIGHT--------------------
+KNIGHT::KNIGHT(char knightChar, COLOR knightColor) :PIECE(knightChar, knightColor)
 {
 
 }
-bool KNIGHT::isValidMove(int sr, int sc, int dr, int dc, Board* b)
+bool KNIGHT::isValidMove(int startRow, int startCol, int destRow, int destCol, Board* chessBoard)
 {
-	int row_diff = dr - sr;
-	int col_diff = dc - sc;
-	if (row_diff < 0)
+	int rowDifference = destRow - startRow;
+	int colDifference = destCol - startCol;
+	if (rowDifference < 0)
 	{
-		row_diff *= -1;
+		rowDifference *= -1;
 	}
-	if (col_diff < 0)
+	if (colDifference < 0)
 	{
-		col_diff *= -1;
+		colDifference *= -1;
 	}
-	if (!((row_diff == 2 && col_diff == 1) || (row_diff == 1 && col_diff == 2)))
+	if (!((rowDifference == 2 && colDifference == 1) || (rowDifference == 1 && colDifference == 2)))
 	{
 		return false;
 	}
-	if (b->get_piece(dr, dc) != nullptr && b->get_piece(dr, dc)->get_color() == color)
+	if (chessBoard->get_piece(destRow, destCol) != nullptr && chessBoard->get_piece(destRow, destCol)->get_color() == pieceColor)
 	{
 		return false;
 	}
 	return true;
 }
-//-----------------QUEEN--------------------
-QUEEN::QUEEN(char s, COLOR c) :PIECE(s, c)
+//QUEEN--------------------
+QUEEN::QUEEN(char queenChar, COLOR queenColor) :PIECE(queenChar, queenColor)
 {
 
 }
-bool QUEEN::isValidMove(int sr, int sc, int dr, int dc, Board* b)
+bool QUEEN::isValidMove(int startRow, int startCol, int destRow, int destCol, Board* chessBoard)
 {
-	int row_diff = dr - sr;
-	int col_diff = dc - sc;
-	if (row_diff < 0)
+	int rowDifference = destRow - startRow;
+	int colDifference = destCol - startCol;
+	if (rowDifference < 0)
 	{
-		row_diff *= -1;
+		rowDifference *= -1;
 	}
-	if (col_diff < 0)
+	if (colDifference < 0)
 	{
-		col_diff *= -1;
+		colDifference *= -1;
 	}
-	if (sr == dr && sc == dc)
-	{
-		return false;
-	}
-	bool diagonal = (row_diff == col_diff);
-	bool straight = (sr == dr || sc == dc);
-	if (!(diagonal || straight))
+	if (startRow == destRow && startCol == destCol)
 	{
 		return false;
 	}
-	if (!b->is_Path_Clear(sr, sc, dr, dc))
+	bool isDiagonalMove = (rowDifference == colDifference);
+	bool isStraightMove = (startRow == destRow || startCol == destCol);
+	if (!(isDiagonalMove || isStraightMove))
 	{
 		return false;
 	}
-	if (b->get_piece(dr, dc) != nullptr && b->get_piece(dr, dc)->get_color() == color)
+	if (!chessBoard->is_Path_Clear(startRow, startCol, destRow, destCol))
+	{
+		return false;
+	}
+	if (chessBoard->get_piece(destRow, destCol) != nullptr && chessBoard->get_piece(destRow, destCol)->get_color() == pieceColor)
 	{
 		return false;
 	}
 	return true;
 }
-//------------------KING------------------
-KING::KING(char s, COLOR c) :PIECE(s, c)
+//KING------------------
+KING::KING(char kingChar, COLOR kingColor) :PIECE(kingChar, kingColor)
 {
 
 }
-bool KING::isValidMove(int sr, int sc, int dr, int dc, Board* b)
+bool KING::isValidMove(int startRow, int startCol, int destRow, int destCol, Board* chessBoard)
 {
-	int row_diff = dr - sr;
-	int col_diff = dc - sc;
-	if (row_diff < 0)
+	int rowDifference = destRow - startRow;
+	int colDifference = destCol - startCol;
+	if (rowDifference < 0)
 	{
-		row_diff *= -1;
+		rowDifference *= -1;
 	}
-	if (col_diff < 0)
+	if (colDifference < 0)
 	{
-		col_diff *= -1;
+		colDifference *= -1;
 	}
-	if (sr == dr && sc == dc)
-	{
-		return false;
-	}
-	if (row_diff > 1 || col_diff > 1)
+	if (startRow == destRow && startCol == destCol)
 	{
 		return false;
 	}
-	if (b->get_piece(dr, dc) != nullptr && b->get_piece(dr, dc)->get_color() == color)
+	if (rowDifference > 1 || colDifference > 1)
+	{
+		return false;
+	}
+	if (chessBoard->get_piece(destRow, destCol) != nullptr && chessBoard->get_piece(destRow, destCol)->get_color() == pieceColor)
 	{
 		return false;
 	}
 	return true;
 }
-//------------------ROOK----------------
-ROOK::ROOK(char s, COLOR c) :PIECE(s, c)
+//ROOK----------------
+ROOK::ROOK(char rookChar, COLOR rookColor) :PIECE(rookChar, rookColor)
 {
 
 }
 
-bool ROOK::isValidMove(int sr, int sc, int dr, int dc, Board* b)
+bool ROOK::isValidMove(int startRow, int startCol, int destRow, int destCol, Board* chessBoard)
 {
-	if (!(sr == dr || sc == dc))
+	if (!(startRow == destRow || startCol == destCol))
 	{
 		return false;
 	}
-	if (sr == dr && sc == dc)
+	if (startRow == destRow && startCol == destCol)
 	{
 		return false;
 	}
-	if (!b->is_Path_Clear(sr, sc, dr, dc))
+	if (!chessBoard->is_Path_Clear(startRow, startCol, destRow, destCol))
 	{
 		return false;
 	}
-	if (b->get_piece(dr, dc) != nullptr && b->get_piece(dr, dc)->get_color() == color)
+	if (chessBoard->get_piece(destRow, destCol) != nullptr && chessBoard->get_piece(destRow, destCol)->get_color() == pieceColor)
 	{
 		return false;
 	}
 	return true;
+}
