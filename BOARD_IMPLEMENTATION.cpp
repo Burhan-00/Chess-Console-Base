@@ -1,21 +1,22 @@
 #include"BOARD.h"
-void setColor(int text, int bg)
+
+void setColor(int textColor, int backgroundColor)
 {
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (bg << 4) | text);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (backgroundColor << 4) | textColor);
 }
-void gotoxy(int x, int y)
+void gotoxy(int positionX, int positionY)
 {
-	COORD coord = { (SHORT)x, (SHORT)y };
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+	COORD consoleCoord = { (SHORT)positionX, (SHORT)positionY };
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), consoleCoord);
 }
 Board::Board()
 {
-	size = 8;
-	for (int i = 0; i < 8; i++)
+	boardSize = 8;
+	for (int rowIndex = 0; rowIndex < boardSize; rowIndex++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int colIndex = 0; colIndex < boardSize; colIndex++)
 		{
-			board[i][j] = nullptr;
+			board[rowIndex][colIndex] = nullptr;
 		}
 	}
 }
@@ -29,9 +30,9 @@ void Board::setupBoard()
 	board[0][5] = new BISHOP('b', BLACK);
 	board[0][6] = new KNIGHT('n', BLACK);
 	board[0][7] = new ROOK('r', BLACK);
-	for (int i = 0; i < 8; i++)
+	for (int pawnIndex = 0; pawnIndex < 8; pawnIndex++)
 	{
-		board[1][i] = new PAWN('p', BLACK);
+		board[1][pawnIndex] = new PAWN('p', BLACK);
 	}
 	board[7][0] = new ROOK('R', WHITE);
 	board[7][1] = new KNIGHT('N', WHITE);
@@ -41,13 +42,13 @@ void Board::setupBoard()
 	board[7][5] = new BISHOP('B', WHITE);
 	board[7][6] = new KNIGHT('N', WHITE);
 	board[7][7] = new ROOK('R', WHITE);
-	for (int i = 0; i < 8; i++)
+	for (int pawnIndex = 0; pawnIndex < 8; pawnIndex++)
 	{
 
-		board[6][i] = new PAWN('P', WHITE);
+		board[6][pawnIndex] = new PAWN('P', WHITE);
 	}
 }
-void Board::displayBoard(COLOR turn)
+void Board::displayBoard(COLOR currentTurn)
 {
 	gotoxy(4, 1);
 	setColor(14, 0);
@@ -57,29 +58,29 @@ void Board::displayBoard(COLOR turn)
 	cout << "   a  b  c  d  e  f  g  h";
 	gotoxy(4, 4);
 	cout << "  +--+--+--+--+--+--+--+--+";
-	for (int i = 0; i < 8; i++)
+	for (int rowIndex = 0; rowIndex < 8; rowIndex++)
 	{
-		gotoxy(4, 5 + i * 2);
-		cout << 8 - i << " ";
-		for (int j = 0; j < 8; j++)
+		gotoxy(4, 5 + rowIndex * 2);
+		cout << 8 - rowIndex << " ";
+		for (int colIndex = 0; colIndex < 8; colIndex++)
 		{
-			bool isLight = (i + j) % 2 == 0;
-			int bgColor = isLight ? 7 : 8; // 7=gray, 8=dark gray
-			if (board[i][j] == nullptr)
+			bool isLightSquare = (rowIndex + colIndex) % 2 == 0;
+			int backgroundShade = isLightSquare ? 7 : 8; // 7=gray, 8=dark gray
+			if (board[rowIndex][colIndex] == nullptr)
 			{
-				setColor(0, bgColor);
+				setColor(0, backgroundShade);
 				cout << "|  ";
 			}
 			else
 			{
-				char sym = board[i][j]->get_Symbol();
-				setColor(0, bgColor);
-				cout << "|" << sym << " ";
+				char pieceCharacter = board[rowIndex][colIndex]->get_Symbol();
+				setColor(0, backgroundShade);
+				cout << "|" << pieceCharacter << " ";
 			}
 		}
 		setColor(14, 0);
 		cout << "|";
-		gotoxy(4, 6 + i * 2);
+		gotoxy(4, 6 + rowIndex * 2);
 		cout << "  +--+--+--+--+--+--+--+--+";
 	}
 	// Right side info panel
@@ -88,7 +89,7 @@ void Board::displayBoard(COLOR turn)
 	cout << "+-----------------+";
 
 	gotoxy(32, 4);
-	if (turn == WHITE)
+	if (currentTurn == WHITE)
 	{
 		setColor(0, 7);
 		cout << "|   WHITE'S TURN  |";
@@ -124,126 +125,126 @@ void Board::displayBoard(COLOR turn)
 	cout << "  lowercase = black";
 	setColor(15, 0);
 }
-PIECE* Board::get_piece(int r, int c)
+PIECE* Board::get_piece(int pieceRow, int pieceCol)
 {
-	return board[r][c];
+	return board[pieceRow][pieceCol];
 }
-void Board::movepiece(int sr, int sc, int dr, int dc)
+void Board::movepiece(int sourceRow, int sourceCol, int destRow, int destCol)
 {
-	PIECE* p = board[sr][sc];
-	if (p == nullptr)
+	PIECE* selectedPiece = board[sourceRow][sourceCol];
+	if (selectedPiece == nullptr)
 	{
 		return;
 	}
-	if (dr < 0 || dr >= 8 || dc < 0 || dc >= 8)
+	if (destRow < 0 || destRow >= 8 || destCol < 0 || destCol >= 8)
 	{
 		cout << "Out of bounds move!" << endl;
 		return;
 	}
-	if (p->isValidMove(sr, sc, dr, dc, this))
+	if (selectedPiece->isValidMove(sourceRow, sourceCol, destRow, destCol, this))
 	{
-		if (board[dr][dc] != nullptr)
+		if (board[destRow][destCol] != nullptr)
 		{
-			delete board[dr][dc];
+			delete board[destRow][destCol];
 		}
-		board[dr][dc] = p;
-		board[sr][sc] = nullptr;
+		board[destRow][destCol] = selectedPiece;
+		board[sourceRow][sourceCol] = nullptr;
 	}
 	else
 	{
 		cout << "Invalid Move!" << endl;
 	}
 }
-bool Board::is_Path_Clear(int sr, int sc, int dr, int dc)
+bool Board::is_Path_Clear(int sourceRow, int sourceCol, int destRow, int destCol)
 {
-	int rowstep = 0;
-	int colstep = 0;
-	if (dr > sr)
+	int rowStepValue = 0;
+	int colStepValue = 0;
+	if (destRow > sourceRow)
 	{
-		rowstep = 1;
+		rowStepValue = 1;
 	}
-	else if (dr < sr)
+	else if (destRow < sourceRow)
 	{
-		rowstep = -1;
+		rowStepValue = -1;
 	}
-	if (dc > sc)
+	if (destCol > sourceCol)
 	{
-		colstep = 1;
+		colStepValue = 1;
 	}
-	else if (dc < sc)
+	else if (destCol < sourceCol)
 	{
-		colstep = -1;
+		colStepValue = -1;
 	}
-	int r = sr + rowstep;
-	int c = sc + colstep;
-	while (r != dr || c != dc)
+	int currentRow = sourceRow + rowStepValue;
+	int currentCol = sourceCol + colStepValue;
+	while (currentRow != destRow || currentCol != destCol)
 	{
-		if (r < 0 || r >= 8 || c < 0 || c >= 8)
+		if (currentRow < 0 || currentRow >= 8 || currentCol < 0 || currentCol >= 8)
 		{
 			return false;
 		}
-		if (board[r][c] != nullptr)
+		if (board[currentRow][currentCol] != nullptr)
 		{
 			return false;
 		}
-		r += rowstep;
-		c += colstep;
+		currentRow += rowStepValue;
+		currentCol += colStepValue;
 	}
 	return true;
 }
 bool Board::is_King_Alive()
 {
-	bool is_white_alive = false;
-	bool is_black_alive = false;
-	for (int i = 0; i < 8; i++)
+	bool isWhiteKingAlive = false;
+	bool isBlackKingAlive = false;
+	for (int rowIndex = 0; rowIndex < 8; rowIndex++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int colIndex = 0; colIndex < 8; colIndex++)
 		{
-			if (board[i][j] != nullptr && board[i][j]->get_Symbol() == 'k' && board[i][j]->get_color() == BLACK)
+			if (board[rowIndex][colIndex] != nullptr && board[rowIndex][colIndex]->get_Symbol() == 'k' && board[rowIndex][colIndex]->get_color() == BLACK)
 			{
-				is_black_alive = true;
+				isBlackKingAlive = true;
 			}
-			if (board[i][j] != nullptr && board[i][j]->get_Symbol() == 'K' && board[i][j]->get_color() == WHITE)
+			if (board[rowIndex][colIndex] != nullptr && board[rowIndex][colIndex]->get_Symbol() == 'K' && board[rowIndex][colIndex]->get_color() == WHITE)
 			{
-				is_white_alive = true;
+				isWhiteKingAlive = true;
 			}
 		}
 	}
-	return (is_white_alive && is_black_alive);
+	return (isWhiteKingAlive && isBlackKingAlive);
 }
-void Board::find_King(COLOR c, int& rows, int& col)
+void Board::find_King(COLOR kingColor, int& kingRow, int& kingCol)
 {
-	char king_symbol;
-	if (c == WHITE)
+	char kingSymbol;
+	if (kingColor == WHITE)
 	{
-		king_symbol = 'K';
+		kingSymbol = 'K';
 	}
-	else if (c == BLACK)
+	else if (kingColor == BLACK)
 	{
-		king_symbol = 'k';
+		kingSymbol = 'k';
 	}
-	for (int i = 0; i < 8; i++)
+	for (int rowIndex = 0; rowIndex < boardSize; rowIndex++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int colIndex = 0; colIndex < boardSize; colIndex++)
 		{
-			if (board[i][j] != nullptr && board[i][j]->get_Symbol() == king_symbol)
+			if (board[rowIndex][colIndex] != nullptr && board[rowIndex][colIndex]->get_Symbol() == kingSymbol)
 			{
-				rows = i;
-				col = j;
+				kingRow = rowIndex;
+				kingCol = colIndex;
 				return;
 			}
 		}
 	}
 }
-bool Board::is_Check(COLOR c)
+bool Board::is_Check(COLOR kingColor)
 {
-	int kr, kl;
-	find_King(c, kr, kl);
-	for (int i = 0; i < 8; i++)
+	int kingRow, kingCol;
+	find_King(kingColor, kingRow, kingCol);
+	for (int rowIndex = 0; rowIndex < 8; rowIndex++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int colIndex = 0; colIndex < 8; colIndex++)
 		{
-			if (board[i][j] != nullptr && board[i][j]->get_color() != c && board[i][j]->isValidMove(i, j, kr, kl, this))
+			if (board[rowIndex][colIndex] != nullptr && board[rowIndex][colIndex]->get_color() != kingColor && board[rowIndex][colIndex]->isValidMove(rowIndex, colIndex, kingRow, kingCol, this))
 			{
 				return true;
 			}
@@ -251,25 +252,25 @@ bool Board::is_Check(COLOR c)
 	}
 	return false;
 }
-bool Board::is_Check_Mate(COLOR c)
+bool Board::is_Check_Mate(COLOR kingColor)
 {
-	if (!is_Check(c))
+	if (!is_Check(kingColor))
 	{
 		return false;
 	}
-	for (int sr = 0; sr < 8; sr++)
+	for (int sourceRow = 0; sourceRow < 8; sourceRow++)
 	{
-		for (int sc = 0; sc < 8; sc++)
+		for (int sourceCol = 0; sourceCol < 8; sourceCol++)
 		{
-			if (board[sr][sc] != nullptr && board[sr][sc]->get_color() == c)
+			if (board[sourceRow][sourceCol] != nullptr && board[sourceRow][sourceCol]->get_color() == kingColor)
 			{
-				for (int dr = 0; dr < 8; dr++)
+				for (int destRow = 0; destRow < 8; destRow++)
 				{
-					for (int dc = 0; dc < 8; dc++)
+					for (int destCol = 0; destCol < 8; destCol++)
 					{
-						if (board[sr][sc]->isValidMove(sr, sc, dr, dc, this))
+						if (board[sourceRow][sourceCol]->isValidMove(sourceRow, sourceCol, destRow, destCol, this))
 						{
-							if (check_safety(sr, sc, dr, dc, c))
+							if (check_safety(sourceRow, sourceCol, destRow, destCol, kingColor))
 							{
 								return false;
 							}
@@ -281,24 +282,24 @@ bool Board::is_Check_Mate(COLOR c)
 	}
 	return true;
 }
-bool Board::check_safety(int sr, int sc, int dr, int dc, COLOR c)
+bool Board::check_safety(int sourceRow, int sourceCol, int destRow, int destCol, COLOR kingColor)
 {
-	PIECE* move = board[sr][sc];
-	PIECE* capture = board[dr][dc];
-	board[dr][dc] = move;
-	board[sr][sc] = nullptr;
-	bool check = is_Check(c);
-	board[sr][sc] = move;
-	board[dr][dc] = capture;
-	return !check;
+	PIECE* movingPiece = board[sourceRow][sourceCol];
+	PIECE* capturedPiece = board[destRow][destCol];
+	board[destRow][destCol] = movingPiece;
+	board[sourceRow][sourceCol] = nullptr;
+	bool isKingInCheck = is_Check(kingColor);
+	board[sourceRow][sourceCol] = movingPiece;
+	board[destRow][destCol] = capturedPiece;
+	return !isKingInCheck;
 }
 Board::~Board()
 {
-	for (int i = 0; i < 8; i++)
+	for (int rowIndex = 0; rowIndex < 8; rowIndex++)
 	{
-		for (int j = 0; j < 8; j++)
+		for (int colIndex = 0; colIndex < 8; colIndex++)
 		{
-			delete board[i][j];
+			delete board[rowIndex][colIndex];
 		}
 	}
 }
