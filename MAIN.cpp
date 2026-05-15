@@ -38,5 +38,6 @@ int main()
         gotoxy(30, 15);
         cin.get();
     }
+
     return 0;
 }
