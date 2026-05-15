@@ -1,39 +1,40 @@
 #include"GAME.h"
-void GAME::Input_convert(string s, int& row, int& col)
+
+void GAME::Input_convert(string inputValue, int& boardRow, int& boardCol)
 {
-	row = 8 - (s[1] - '0');
-	col = s[0] - 'a';
+	boardRow = 8 - (inputValue[1] - '0');
+	boardCol = inputValue[0] - 'a';
 }
 void GAME::switch_Turn()
 {
-	if (current_turn == WHITE)
+	if (activeTurn == WHITE)
 	{
-		current_turn = BLACK;
+		activeTurn = BLACK;
 	}
 	else
 	{
-		current_turn = WHITE;
+		activeTurn = WHITE;
 	}
 }
-bool GAME::is_Valid_Input(string s)
+bool GAME::is_Valid_Input(string inputValue)
 {
-	if (s.length() != 2)
+	if (inputValue.length() != 2)
 	{
 		return false;
 	}
-	if ((s[0] >= 'a' && s[0] <= 'h') && (s[1] >= '1' && s[1] <= '8'))
+	if ((inputValue[0] >= 'a' && inputValue[0] <= 'h') && (inputValue[1] >= '1' && inputValue[1] <= '8'))
 	{
 		return true;
 	}
 	return false;
 }
-bool GAME::is_Current_Player_Piece(int r, int c)
+bool GAME::is_Current_Player_Piece(int pieceRow, int pieceCol)
 {
-	if (b.get_piece(r, c) == nullptr)
+	if (chessBoard.get_piece(pieceRow, pieceCol) == nullptr)
 	{
 		return false;
 	}
-	return b.get_piece(r, c)->get_color() == current_turn;
+	return chessBoard.get_piece(pieceRow, pieceCol)->get_color() == activeTurn;
 }
 void GAME::showMenu()
 {
@@ -59,16 +60,16 @@ void GAME::showMenu()
 	cout << "Enter choice (1 or 2): ";
 	setColor(15, 0);
 }
-void GAME::showMessage(string msg, int color)
+void GAME::showMessage(string displayMessage, int textColor)
 {
 	system("cls");
-	setColor(color, 0);
+	setColor(textColor, 0);
 	gotoxy(28, 8);
 	cout << "==========================================";
 	gotoxy(28, 9);
 	cout << "|                                        |";
 	gotoxy(28, 10);
-	cout << " " << msg << "      ";
+	cout << " " << displayMessage << "      ";
 	gotoxy(28, 11);
 	cout << "|                                        |";
 	gotoxy(28, 12);
@@ -79,19 +80,19 @@ void GAME::showMessage(string msg, int color)
 }
 void GAME::Start_Game()
 {
-	string source, destination;
-	int sr, sc, dr, dc;
-	COLOR enemyking;
-	b.setupBoard();
-	while (b.is_King_Alive())
+	string sourcePosition, destinationPosition;
+	int sourceRow, sourceCol, destRow, destCol;
+	COLOR enemyKingColor;
+	chessBoard.setupBoard();
+	while (chessBoard.is_King_Alive())
 	{
-		b.displayBoard(current_turn);
+		chessBoard.displayBoard(activeTurn);
 		gotoxy(4, 24);
 		setColor(11, 0);
 		cout << "Source: ";
 		setColor(15, 0);
-		cin >> source;
-		if (!is_Valid_Input(source))
+		cin >> sourcePosition;
+		if (!is_Valid_Input(sourcePosition))
 		{
 			showMessage("   INVALID INPUT! TRY AGAIN  ", 12);
 			continue;
@@ -100,40 +101,40 @@ void GAME::Start_Game()
 		setColor(11, 0);
 		cout << "Destination: ";
 		setColor(15, 0);
-		cin >> destination;
-		if (!is_Valid_Input(destination))
+		cin >> destinationPosition;
+		if (!is_Valid_Input(destinationPosition))
 		{
 			showMessage("   INVALID INPUT! TRY AGAIN  ", 12);
 			continue;
 		}
-		Input_convert(source, sr, sc);
-		Input_convert(destination, dr, dc);
-		if (!is_Current_Player_Piece(sr, sc))
+		Input_convert(sourcePosition, sourceRow, sourceCol);
+		Input_convert(destinationPosition, destRow, destCol);
+		if (!is_Current_Player_Piece(sourceRow, sourceCol))
 		{
 			showMessage("    NOT YOUR PIECE!          ", 12);
 			continue;
 		}
-		PIECE* p = b.get_piece(sr, sc);
-		if (p == nullptr)
+		PIECE* selectedPiece = chessBoard.get_piece(sourceRow, sourceCol);
+		if (selectedPiece == nullptr)
 		{
 			showMessage("    EMPTY LOCATION!          ", 12);
 			continue;
 		}
-		if (!p->isValidMove(sr, sc, dr, dc, &b))
+		if (!selectedPiece->isValidMove(sourceRow, sourceCol, destRow, destCol, &chessBoard))
 		{
 			showMessage("    INVALID MOVE!            ", 12);
 			continue;
 		}
-		if (!b.check_safety(sr, sc, dr, dc, current_turn))
+		if (!chessBoard.check_safety(sourceRow, sourceCol, destRow, destCol, activeTurn))
 		{
 			showMessage("  MOVE PUTS YOU IN CHECK!    ", 12);
 			continue;
 		}
-		b.movepiece(sr, sc, dr, dc);
-		if (b.is_King_Alive() == false)
+		chessBoard.movepiece(sourceRow, sourceCol, destRow, destCol);
+		if (chessBoard.is_King_Alive() == false)
 		{
 
-			if (current_turn == WHITE)
+			if (activeTurn == WHITE)
 			{
 				showMessage("  GAME OVER! WHITE WINS    ", 12);
 			}
@@ -143,25 +144,27 @@ void GAME::Start_Game()
 			}
 			break;
 		}
-		if (current_turn == WHITE)
+		if (activeTurn == WHITE)
 		{
-			enemyking = BLACK;
+			enemyKingColor = BLACK;
 		}
 		else
 		{
-			enemyking = WHITE;
+			enemyKingColor = WHITE;
 		}
-		if (b.is_Check(enemyking))
+		if (chessBoard.is_Check(enemyKingColor))
 		{
-			if (b.is_Check_Mate(enemyking))
+			if (chessBoard.is_Check_Mate(enemyKingColor))
 			{
-				if (current_turn == WHITE)
+				if (activeTurn == WHITE)
 				{
 					showMessage("  CHECKMATE! WHITE WINS!     ", 10);
+					system("pause");
 				}
 				else
 				{
 					showMessage("  CHECKMATE! BLACK WINS!     ", 10);
+					system("pause");
 				}
 				break;
 			}
